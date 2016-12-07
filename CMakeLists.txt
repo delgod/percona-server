@@ -85,9 +85,6 @@ IF (${MAX_INDEXES} GREATER 255)
 ENDIF()
 MESSAGE(STATUS "Configuring with MAX_INDEXES = ${MAX_INDEXES}")
 
-# PAM build Handling
-OPTION(WITH_PAM "Build with Percona PAM plugin" OFF)
-
 # We choose to provide WITH_DEBUG as alias to standard CMAKE_BUILD_TYPE=Debug
 # which turns out to be not trivial, as this involves synchronization 
 # between CMAKE_BUILD_TYPE and WITH_DEBUG. Besides, we have to deal with cases
@@ -145,6 +142,9 @@ IF(BUILD_CONFIG)
   INCLUDE(
   ${CMAKE_SOURCE_DIR}/cmake/build_configurations/${BUILD_CONFIG}.cmake)
 ENDIF()
+
+# PAM build Handling
+OPTION(WITH_PAM "Build with Percona PAM plugin" OFF)
 
 #cmake on 64bit windows/mac/solaris doesn't set CMAKE_SYSTEM_PROCESSOR correctly
 SET(MYSQL_MACHINE_TYPE ${CMAKE_SYSTEM_PROCESSOR})
