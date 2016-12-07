@@ -69,8 +69,6 @@ IF(NOT DEFINED MANUFACTURER)
   MARK_AS_ADVANCED(MANUFACTURER)
 ENDIF()
 
-#PAM build Handling
-OPTION(WITH_PAM "Build with Percona PAM plugin" OFF)
 # We choose to provide WITH_DEBUG as alias to standard CMAKE_BUILD_TYPE=Debug
 # which turns out to be not trivial, as this involves synchronization 
 # between CMAKE_BUILD_TYPE and WITH_DEBUG. Besides, we have to deal with cases
@@ -125,6 +123,9 @@ IF(BUILD_CONFIG)
   INCLUDE(
   ${CMAKE_SOURCE_DIR}/cmake/build_configurations/${BUILD_CONFIG}.cmake)
 ENDIF()
+
+# PAM build Handling
+OPTION(WITH_PAM "Build with Percona PAM plugin" OFF)
 
 # Include the platform-specific file. To allow exceptions, this code
 # looks for files in order of how specific they are. If there is, for
