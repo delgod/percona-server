@@ -1,0 +1,89 @@
+#!/usr/bin/env bats
+
+MYSQL_BASE_VERSION=$(grep "^MYSQL_BASE_VERSION:" CMakeCache.txt 2>/dev/null | cut -d = -f 2)
+
+@test "WITH_PAM=ON" {
+    grep 'plugin/auth_pam.so$' support-files/plugins.files
+    grep 'plugin/percona-pam-for-mysql' Makefile
+}
+
+@test "WITH_ZLIB=system" {
+    [ -f cmake_install.cmake -a -f Makefile ]
+
+    run grep 'zlib/cmake_install.cmake' cmake_install.cmake
+    [ "$status" -ne 0 ]
+
+    run grep '$(MAKE) -f .* zlib$' Makefile
+    [ "$status" -ne 0 ]
+
+    run grep '$(MAKE) -f zlib/' Makefile
+    [ "$status" -ne 0 ]
+}
+
+@test "WITH_INNODB_MEMCACHED=ON" {
+    if (( $(echo "$MYSQL_BASE_VERSION < 5.6" |bc -l) )); then
+        skip "MySQL version is less than 5.6"
+    fi
+    grep 'plugin/libmemcached.so$' support-files/plugins.files
+    grep '$(MAKE) -f plugin/innodb_memcached' Makefile
+    grep '^#define WITH_INNODB_MEMCACHED 1$' include/config.h
+}
+
+@test "WITH_EMBEDDED_SERVER=OFF" {
+    [ -f cmake_install.cmake -a -f Makefile ]
+
+    run grep 'libmysqld/cmake_install.cmake' cmake_install.cmake
+    [ "$status" -ne 0 ]
+
+    run grep '$(MAKE) -f .* mysql_embedded' Makefile
+    [ "$status" -ne 0 ]
+}
+
+@test "WITH_MECAB=system" {
+    if (( $(echo "$MYSQL_BASE_VERSION < 5.7" |bc -l) )); then
+        skip "MySQL version is less than 5.7"
+    fi
+    grep 'plugin/libpluginmecab.so$' support-files/plugins.files
+    grep 'plugin/libpluginmecab.so' plugin/fulltext/cmake_install.cmake
+    grep '$(MAKE) -f .* mecab_parser' Makefile
+}
+
+@test "WITH_SSL=system" {
+    [ -f cmake_install.cmake -a -f Makefile ]
+
+    run grep 'yassl/cmake_install.cmake' cmake_install.cmake
+    [ "$status" -ne 0 ]
+
+    run grep '$(MAKE) -f .* yassl$' Makefile
+    [ "$status" -ne 0 ]
+
+    run grep '$(MAKE) -f .* taocrypt$' Makefile
+    [ "$status" -ne 0 ]
+}
+
+@test "TOKUDB is enabled" {
+    if egrep -q -i '^WITHOUT_TOKUDB:.*=(1|ON)' CMakeCache.txt; then
+        skip "Compiling without TOKUDB engine"
+    fi
+    grep '$(MAKE) -f .* tokudb'        Makefile
+    grep '$(MAKE) -f .* tokudb_backup' Makefile
+    grep 'plugin/ha_tokudb.so$'     support-files/plugins.files
+    grep 'plugin/tokudb_backup.so$' support-files/plugins.files
+    grep '/PerconaFT/' storage/tokudb/cmake_install.cmake
+}
+
+@test "DEBUG_EXTNAME=OFF" {
+    run grep 'RENAME "mysqld-debug"' sql/cmake_install.cmake
+    DEBUG_EC=${status}
+    run egrep -q -i '^WITHOUT_TOKUDB:.*=(1|ON)' CMakeCache.txt
+    TOKUDB_EC=${status}
+
+    if [ "$DEBUG_EC" -ne 0 -a "$TOKUDB_EC" -eq 0 ]; then
+        skip "Compiling without TOKUDB engine"
+    fi
+    [ "$DEBUG_EC" -eq 0 ]
+}
+
+@test "MYSQL_COMPILATION_COMMENT" {
+    egrep '#define[[:space:]]+MYSQL_COMPILATION_COMMENT[[:space:]]+"Percona Server for MySQL \(GPL\)"' include/mysql_version.h
+}
