@@ -5,11 +5,19 @@ OPTION(ENABLE_DOWNLOADS
   ON)
 
 IF(NOT DEFINED WITHOUT_TOKUDB AND NOT DEFINED WITHOUT_TOKUDB_STORAGE_ENGINE)
-  OPTION(WITHOUT_TOKUDB "Include/exclude TOKUDB storage engine from build" ON)
+  OPTION(WITHOUT_TOKUDB "Include/exclude TOKUDB storage engine from build" OFF)
 ENDIF()
 
 IF(NOT WITHOUT_TOKUDB)
   OPTION(DEBUG_EXTNAME "" OFF)
+  OPTION(TOKU_DEBUG_PARANOID "Enable paranoid asserts." OFF)
+  OPTION(USE_GTAGS "Build the gtags database." OFF)
+  OPTION(USE_CTAGS "Build the ctags database." OFF)
+  OPTION(USE_ETAGS "Build the etags database." OFF)
+  OPTION(USE_CSCOPE "Build the cscope database." OFF)
+  IF(NOT DEFINED WITH_SSL)
+    SET(TOKUDB_BACKUP_PLUGIN_VERSION "system" CACHE STRING "Type of SSL support")
+  ENDIF()
 ENDIF()
 
 OPTION(ENABLE_DTRACE "Enable Sun DTrace" OFF)

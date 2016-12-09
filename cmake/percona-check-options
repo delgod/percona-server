@@ -61,6 +61,10 @@ MYSQL_BASE_VERSION=$(grep "^MYSQL_BASE_VERSION:" CMakeCache.txt 2>/dev/null | cu
     [ "$status" -ne 0 ]
 }
 
+@test "MYSQL_COMPILATION_COMMENT" {
+    egrep '#define[[:space:]]+MYSQL_COMPILATION_COMMENT[[:space:]]+"Percona Server for MySQL' include/mysql_version.h
+}
+
 @test "TOKUDB is enabled" {
     if egrep -q -i '^WITHOUT_TOKUDB:.*=(1|ON)' CMakeCache.txt; then
         skip "Compiling without TOKUDB engine"
@@ -70,6 +74,35 @@ MYSQL_BASE_VERSION=$(grep "^MYSQL_BASE_VERSION:" CMakeCache.txt 2>/dev/null | cu
     grep 'plugin/ha_tokudb.so$'     support-files/plugins.files
     grep 'plugin/tokudb_backup.so$' support-files/plugins.files
     grep '/PerconaFT/' storage/tokudb/cmake_install.cmake
+}
+
+@test "WITH_VALGRIND=OFF" {
+    run egrep -q -i '^WITHOUT_TOKUDB:.*=(1|ON)' CMakeCache.txt
+    TOKUDB_EC=${status}
+
+    [ -f include/config.h -a -f include/my_config.h ]
+
+    run grep '#define HAVE_VALGRIND' include/config.h
+    if [ "$status" -eq 0 -a "$TOKUDB_EC" -eq 0 ]; then
+        skip "Compiling without TOKUDB engine"
+    fi
+    [ "$status" -ne 0 ]
+
+    run grep '#define HAVE_VALGRIND' include/my_config.h
+    if [ "$status" -eq 0 -a "$TOKUDB_EC" -eq 0 ]; then
+        skip "Compiling without TOKUDB engine"
+    fi
+    [ "$status" -ne 0 ]
+}
+
+@test "USE_VALGRIND=OFF" {
+    if egrep -q -i '^WITHOUT_TOKUDB:.*=(1|ON)' CMakeCache.txt; then
+        skip "Compiling without TOKUDB engine"
+    fi
+    [ -f storage/tokudb/PerconaFT/portability/toku_config.h ]
+
+    run grep '#define USE_VALGRIND' storage/tokudb/PerconaFT/portability/toku_config.h
+    [ "$status" -ne 0 ]
 }
 
 @test "DEBUG_EXTNAME=OFF" {
@@ -84,6 +117,50 @@ MYSQL_BASE_VERSION=$(grep "^MYSQL_BASE_VERSION:" CMakeCache.txt 2>/dev/null | cu
     [ "$DEBUG_EC" -eq 0 ]
 }
 
-@test "MYSQL_COMPILATION_COMMENT" {
-    egrep '#define[[:space:]]+MYSQL_COMPILATION_COMMENT[[:space:]]+"Percona Server for MySQL \(GPL\)"' include/mysql_version.h
+@test "USE_GTAGS=OFF" {
+    run egrep -q -i '^USE_GTAGS:.*=(0|OFF)' CMakeCache.txt
+    IS_OFF_EC=${status}
+    run egrep -q -i '^WITHOUT_TOKUDB:.*=(1|ON)' CMakeCache.txt
+    TOKUDB_EC=${status}
+
+    if [ "$IS_OFF_EC" -ne 0 -a "$TOKUDB_EC" -eq 0 ]; then
+        skip "Compiling without TOKUDB engine"
+    fi
+    [ "$IS_OFF_EC" -eq 0 ]
+}
+
+@test "USE_CTAGS=OFF" {
+    run egrep -q -i '^USE_CTAGS:.*=(0|OFF)' CMakeCache.txt
+    IS_OFF_EC=${status}
+    run egrep -q -i '^WITHOUT_TOKUDB:.*=(1|ON)' CMakeCache.txt
+    TOKUDB_EC=${status}
+
+    if [ "$IS_OFF_EC" -ne 0 -a "$TOKUDB_EC" -eq 0 ]; then
+        skip "Compiling without TOKUDB engine"
+    fi
+    [ "$IS_OFF_EC" -eq 0 ]
+}
+
+@test "USE_ETAGS=OFF" {
+    run egrep -q -i '^USE_ETAGS:.*=(0|OFF)' CMakeCache.txt
+    IS_OFF_EC=${status}
+    run egrep -q -i '^WITHOUT_TOKUDB:.*=(1|ON)' CMakeCache.txt
+    TOKUDB_EC=${status}
+
+    if [ "$IS_OFF_EC" -ne 0 -a "$TOKUDB_EC" -eq 0 ]; then
+        skip "Compiling without TOKUDB engine"
+    fi
+    [ "$IS_OFF_EC" -eq 0 ]
+}
+
+@test "USE_CSCOPE=OFF" {
+    run egrep -q -i '^USE_CSCOPE:.*=(0|OFF)' CMakeCache.txt
+    IS_OFF_EC=${status}
+    run egrep -q -i '^WITHOUT_TOKUDB:.*=(1|ON)' CMakeCache.txt
+    TOKUDB_EC=${status}
+
+    if [ "$IS_OFF_EC" -ne 0 -a "$TOKUDB_EC" -eq 0 ]; then
+        skip "Compiling without TOKUDB engine"
+    fi
+    [ "$IS_OFF_EC" -eq 0 ]
 }
